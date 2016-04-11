@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <style type="text/css">
+        *{
+            margin:0;
+            padding:0;
+
+        }
+        ul{
+            list-style: none;
+        }
+        span{
+            display: inline-block;
+        }
+        .box{
+            width:600px;
+            margin:20px auto;
+            padding:10px;
+            border:1px solid lightgreen;
+            border-radius:10px;
+            overflow: hidden;
+        }
+        h2{
+            font-size: 20px;
+            color:white;
+            background:#9c9c9c;
+            /*overflow: hidden;*/
+
+        }
+        h2 span{
+            /*float: left;*/
+            width:200px;
+            height:35px;
+            line-height: 35px;
+            text-align: center;
+        }
+        #dataList{
+            height:300px;
+        }
+        #dataList li{
+            height:30px;
+            cursor: pointer;
+           /* overflow: hidden;*/
+        }
+        #dataList li:nth-child(even){
+            background:lightblue;
+        }
+        #dataList li:hover{
+            background:lightgray;
+        }
+        #dataList li:active{
+            background:#1c90f2;
+        }
+        #dataList li span{
+            /*float:left;*/
+            width:200px;
+            height:30px;
+            line-height: 30px;
+            text-align: center;
+
+        }
+
+        #selectList{
+            margin-top:10px;
+            float:right;
+            overflow: hidden;
+        }
+        #selectList div,#selectList ul,#selectList input{
+            float: left;
+        }
+        #selectList div{
+            margin-left:5px;
+            width:60px;
+            height:18px;
+            line-height: 18px;
+            border:1px solid lightgreen;
+            border-radius:10px;
+            text-align: center;
+            cursor: pointer;
+
+        }
+        #selectList ul{
+            margin-left: 5px;
+            overflow: hidden;
+        }
+        #selectList ul li{
+            margin-left: 5px;
+            float: left;
+            width:20px;
+            height:18px;
+            line-height:18px;
+            text-align: center;
+            cursor: pointer;
+            border:1px solid lightgreen;
+        }
+        #selectList ul li.bg{
+            background: lightgreen;
+        }
+        #selectList input{
+            margin-left: 5px;
+            width:40px;
+            height:18px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="box">
+    <h2><span>学号</span><span>性别</span><span>分数</span></h2>
+    <ul id="dataList">
+
+    </ul>
+    <div id="selectList">
+        <div class="fir">首页</div>
+        <div class="pre">上一页</div>
+        <ul id="curPage">
+
+        </ul>
+        <div class="nex">下一页</div>
+        <div class="last">尾页</div>
+       <input type="text" id="inputTo"/>
+    </div>
+</div>
+<script type="text/javascript">
+     var $ajax=function(url,callback){
+         var xhr=new XMLHttpRequest();
+         url.indexOf("?")>-1?url=url+"&_="+Math.random():url=url+"?_="+Math.random();
+         xhr.open("get",url,true);
+         xhr.onreadystatechange=function(){
+             if(this.readyState==4&&/^2\d{2}$/.test(this.status)){
+                 var con=xhr.responseText;
+                 con=JSON.parse(con);
+                 typeof callback==="function"?callback(con):null;
+
+             }
+         };
+         xhr.send();
+     };
+     var page= 1,count=10,totalPage=0;
+     //首先把第一页的数据返回绑定在页面上，然后显示在页面
+    $ajax("/getInfo?count="+count+"&page="+page,function(con){
+        bindList(con.list);
+        totalPage=con.totalPage;
+        bindPage(totalPage);
+        selectPage();
+
+    });
+    function bindList(data){
+        var  dataList=document.getElementById("dataList");
+        var str="";
+        for(var i=0;i<data.length;i++){
+            var cur=data[i];
+            var sex=cur.sex===1?"男":"女";
+            str+="<li num='"+cur.num+"'>";
+            str+="<span>"+cur.num+"</span>";
+            str+="<span>"+sex+"</span>";
+            str+="<span>"+cur.score+"</span>";
+            str+="</li>";
+        }
+        dataList.innerHTML=str;
+
+        var oLis=dataList.getElementsByTagName("li");
+        for( var k=0;k<oLis.length;k++){
+            oLis[k].onclick=function(){
+                window.open("/detail.html?num="+this.getAttribute("num"))
+            }
+        }
+
+    }
+     //绑定页码
+    function bindPage(totalPage){
+        var str="";
+        for(var i=1;i<=totalPage;i++){
+            str+="<li>"+i+"</li>";
+        }
+        var pageList=document.getElementById("curPage");
+        pageList.innerHTML=str;
+    }
+    //让当前页的页码选中
+    function selectPage(){
+        var oLis=document.getElementById("curPage").getElementsByTagName("li");
+        for(var i=0;i<oLis.length;i++){
+            if(i+1===page){
+                oLis[i].className="bg";
+            }else{
+                oLis[i].className=null;
+            }
+        }
+    }
+    //用事件委托来实现分页逻辑
+
+    document.getElementById("selectList").onclick=function(e){
+        e=e||window.event;
+        e.target= e.target|| e.srcElement;
+        //点击的是每个li的页码
+        if(e.target.tagName.toLowerCase()=="li"){
+            page=Number(e.target.innerHTML);
+            getInfor();
+            return;
+        }
+        //点击第一页
+        if(e.target.className=="fir"){
+            page=1;
+            getInfor();
+            return;
+        }//点击一页
+        if(e.target.className=="pre"){
+            if(page==1){
+                return;
+            }
+            page--;
+            getInfor();
+            return;
+        }//点击最后一页
+        if(e.target.className=="last"){
+            page=totalPage;
+            getInfor();
+            return;
+        }//点击一页
+        if(e.target.className=="nex"){
+            if(page==totalPage){
+                return;
+            }
+            page++;
+            getInfor();
+            return;
+        }
+
+
+    };
+     //输入文本的时候跳转
+     document.getElementById("inputTo").onkeyup=function(e){
+         e=e||window.event;
+         e.target= e.target|| e.srcElement;
+         if(e.keyCode==13){
+             //按下enter键的时候
+             var val=this.value.replace(/(^ +| +$)/g,"");
+             if(isNaN(val)){
+                 this.value="";
+                 return;
+             }
+             if(val<1){
+                 page=1;
+                 this.value=1;
+             }else if(val>totalPage){
+                 page=totalPage;
+                 this.value=totalPage;
+             }else{
+                 page=Number(val);
+             }
+             getInfor();
+
+
+         }
+
+     };
+     function getInfor(){
+         $ajax("/getInfo?count="+count+"&page="+page,function(con){
+             bindList(con.list);
+             selectPage();
+         })
+     }
+
+</script>
+</body>
+</html>

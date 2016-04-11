@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <style type="text/css">
+        *{
+            margin:0;
+            padding:0;
+        }
+        #box{
+            margin:20px auto;
+            width:600px;
+            height:300px;
+            padding:10px;
+            border: 1px solid red;
+        }
+    </style>
+</head>
+<body>
+<div id="box"></div>
+<script type="text/javascript">
+    var $ajax=function(url,callback){
+        var xhr=new XMLHttpRequest();
+        url.indexOf("?")>-1?url+="&_="+Math.random():url+="?_="+Math.random();
+        xhr.open("get",url,true);
+        xhr.onreadystatechange=function(){
+            if(xhr.readyState==4&&/^2\d{2}$/.test(xhr.status)){
+                var con=xhr.responseText;
+                con=JSON.parse(con);
+                console.log(con);
+                typeof callback==="function"?callback(con):null;
+            }
+        }
+        xhr.send();
+    };
+
+    var curUrl=window.location.href;//获取当前页面的url地址
+    function query(url){
+        var obj={};
+        var reg=/([^?&=]+)=([^?&=]+)/g;
+        url.replace(reg,function(){
+            obj[arguments[1]]=arguments[2];
+        });
+        return obj;
+    }
+
+    var urlObj=query(curUrl);
+    var num=urlObj.num;
+
+    //通过这个参数值想后台请求详细数据
+    //把得到的数据绑在页面上
+    $ajax("/detailInfo?num="+num,function(con){
+         var str="";
+        str+="学号是"+con.num+"<br/><br/>";
+        str+="性别是"+(con.sex===1?"男":"女")+"<br/><br/>";
+        str+="分数是"+con.score+"<br/><br/>";
+        var box=document.getElementById("box");
+        box.innerHTML=str;
+    })
+</script>
+</body>
+</html>
